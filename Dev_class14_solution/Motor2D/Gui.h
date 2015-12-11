@@ -25,7 +25,8 @@ enum GuiTypes
 	unknown,
 	image,
 	label,
-	button
+	button,
+	input_text
 };
 
 // ---------------------------------------------------
@@ -41,6 +42,8 @@ public:
 	virtual void DebugDraw() const;
 	virtual void Update(const Gui* mouse_hover, const Gui* focus)
 	{}
+	virtual void Update()
+	{}
 	void CheckInput(const Gui* mouse_hover, const Gui* focus);
 	void SetLocalPos(int x, int y);
 	void Center();
@@ -49,6 +52,7 @@ public:
 	iPoint GetScreenPos() const;
 	iPoint GetLocalPos() const;
 	void SetListener(j1Module* module);
+	void SetParent(Gui* dad);
 
 protected:
 	void SetSize(int w, int h);
@@ -58,9 +62,12 @@ public:
 	bool interactive = false;
 	bool cut_childs = false;
 	bool can_focus = false;
+	bool active = true;
+	p2List<Gui*> childs;
+	GuiTypes type = GuiTypes::unknown;
 	Gui* parent = nullptr;
 protected:
-	GuiTypes type = GuiTypes::unknown;
+	
 	j1Module* listener = nullptr;
 	bool have_focus = false;
 private:
@@ -115,7 +122,8 @@ private:
 class GuiInputText : public Gui
 {
 public:
-	GuiInputText(const char* default_text, uint width, const SDL_Texture* texture, const rectangle& section, bool is_pasword=false, const iPoint& offset = { 0, 0 }, _TTF_Font* font=NULL);
+	GuiInputText(const char* default_text, uint width, const SDL_Texture* texture, const rectangle& section, const iPoint& offset = { 0, 0 },
+		bool password = false, int _max_quantity = 0);
 	~GuiInputText();
 
 	void Update(const Gui* mouse_hover, const Gui* focus);
@@ -124,12 +132,15 @@ public:
 private:
 
 	GuiLabel text;
+	int max_quantity;
+	bool password;
 	GuiImage image;
 	p2SString input;
-	iPoint cursor_coords = {0, 0};
+	iPoint cursor_coords = { 0, 0 };
 	int last_cursor = 0;
 	bool had_focus = false;
-	bool is_password = false;
+	const char* def_text;
+	bool show_def_text;
 };
 
 #endif // __GUI_H__

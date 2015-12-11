@@ -42,7 +42,10 @@ public:
 	GuiImage* CreateImage(const char* filename);
 	GuiImage* CreateImage(const rectangle& atlas_section);
 	GuiLabel* CreateLabel(const char* text, _TTF_Font* font = NULL);
-	GuiInputText* CreateInput(const rectangle& section, const char* default_text, uint width, bool is_password =false, const iPoint& offset = { 0, 0 });
+	GuiInputText* CreateInput(const rectangle& section, const char* default_text, uint width, const iPoint& offset = { 0, 0 }, bool password = false, int max_quantity = 0);
+
+	void DisableGuiElement(Gui* elem);
+	void EnableGuiElement(Gui* elem);
 
 	const Gui* FindMouseHover() const;
 	const SDL_Texture* GetAtlas() const;

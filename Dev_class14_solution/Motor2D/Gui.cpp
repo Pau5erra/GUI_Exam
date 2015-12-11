@@ -133,7 +133,10 @@ void Gui::CheckInput(const Gui* mouse_hover, const Gui* focus)
 			listener->OnGui(this, GuiEvents::mouse_lclick_up);
 	}
 }
-
+void Gui::SetParent(Gui* dad){
+	this->parent = dad;
+	dad->childs.add(this);
+}
 // class GuiImage ---------------------------------------------------
 GuiImage::GuiImage(const SDL_Texture* texture) : Gui(), texture(texture)
 {
@@ -252,17 +255,23 @@ void GuiLabel::Draw() const
 }
 
 // class GuiInputText ---------------------------------------------------
-GuiInputText::GuiInputText(const char* default_text, uint width, const SDL_Texture* texture, const rectangle& section, bool is_password, const iPoint& offset, _TTF_Font* font)
-	: Gui(), text(default_text, font), input(default_text), image(texture, section)
+GuiInputText::GuiInputText(const char* default_text, uint width, const SDL_Texture* texture, const rectangle& section, const iPoint& offset, bool pass, int _max_quantity)
+	: Gui(), text(default_text), input(default_text), image(texture, section)
 {
-	type = GuiTypes::label;
+	type = GuiTypes::input_text;
 	SetSize(width, text.GetScreenRect().h);
 	text.parent = this;
 	image.parent = this;
 	image.SetLocalPos(offset.x, offset.y);
-	this->is_password = is_password;
+	max_quantity = _max_quantity;
+	password = pass;
+	def_text = default_text;
+	show_def_text = true;
+
 	// Calculate the Y so we have it ready
 	App->font->CalcSize("A", cursor_coords.x, cursor_coords.y);
+	if (max_quantity == 0)
+		max_quantity = width / cursor_coords.x;
 	cursor_coords.x = 0;
 }
 
@@ -274,81 +283,104 @@ GuiInputText::~GuiInputText()
 // --------------------------
 void GuiInputText::Update(const Gui* mouse_hover, const Gui* focus)
 {
-	if(interactive == false)
+	if (interactive == false)
 		return;
 
 	bool inside = (mouse_hover == this);
 	bool have_focus = (focus == this);
 
 	// TODO : focus
-	if(had_focus != have_focus)
+	if (had_focus != have_focus)
 	{
-		if(have_focus == true)
-			App->input->StartTextInput(nullptr);
+		if (have_focus == true)
+		{
+			if (show_def_text == true)
+			{
+				input.Clear();
+				show_def_text = false;
+			}
+			App->input->StartTextInput(nullptr, input);
+		}
 		else
-			App->input->EndTextInput();
+		{
+			if (input.Length() == 0)
+			{
+				input = def_text;
+				show_def_text = true;
+				text.SetText(input.GetString());
+			}
+			if (focus->type != GuiTypes::input_text)
+				App->input->EndTextInput();
+		}
 
 		had_focus = have_focus;
 	}
 
-		static p2SString selected(100);
-		
-		if (have_focus == true)
-		{
-			// TODO 5: Calculate where the cursor has to be placed and update your label
-			// in the InputText ui element
-			int cursor, selection;
-			const char* user_input = App->input->GetTextInput(cursor, selection);
-			if (input != user_input || cursor != last_cursor)
-			{
-				if (input != user_input)
-				{
-					input = user_input;
-					if (is_password == true){
-						p2SString selected_pass;
-						for (int x = input.Length(); x > 0; x--){
-							selected_pass.Insert(0, "*");
-						}
-						text.SetText(selected_pass.GetString());
-					}
-					else{
-						text.SetText(user_input);
-					}
+	static p2SString selected(100);
 
-					if (listener != nullptr)
-						listener->OnGui(this, GuiEvents::input_changed);
+	if (have_focus == true)
+	{
+		// TODO 5: Calculate where the cursor has to be placed and update your label
+		// in the InputText ui element
+		int cursor, selection;
+		p2SString user_input = App->input->GetTextInput(cursor, selection);
+
+		if (input != user_input || cursor != last_cursor)
+		{
+			if (input != user_input)
+			{
+				if (user_input.Length() > max_quantity)
+				{
+					user_input = input;
+					cursor = last_cursor;
+					App->input->TextInputTooLong();
 				}
 
-				last_cursor = cursor;
-				if (cursor > 0)
+				input = user_input;
+				if (password == true)
 				{
-					if (is_password == true){
-						p2SString selected_pass;
-						for (int x = input.Length(); x > 0; x--){
-							selected_pass.Insert(0, "*");
-						}
-						selected_pass.SubString(0, cursor, selected);
-						App->font->CalcSize(selected.GetString(), cursor_coords.x, cursor_coords.y);
-					}
-					else{
-						if (input.Length() >= selected.GetCapacity())
-							selected.Reserve(input.Length() * 2);
-						input.SubString(0, cursor, selected);
-						App->font->CalcSize(selected.GetString(), cursor_coords.x, cursor_coords.y);
-					}
+					p2SString pass_hided;
+					for (int x = input.Length(); x > 0; x--)
+						pass_hided.Insert(0, "*");
+					text.SetText(pass_hided.GetString());
+				}
+				else
+					text.SetText(user_input.GetString());
+
+				if (listener != nullptr)
+					listener->OnGui(this, GuiEvents::input_changed);
+			}
+
+			last_cursor = cursor;
+			if (cursor > 0)
+			{
+				if (input.Length() >= selected.GetCapacity())
+					selected.Reserve(input.Length() * 2);
+				if (password == true)
+				{
+					p2SString pass_hided;
+					for (int x = input.Length(); x > 0; x--)
+						pass_hided.Insert(0, "*");
+					pass_hided.SubString(0, cursor, selected);
+					App->font->CalcSize(selected.GetString(), cursor_coords.x, cursor_coords.y);
 				}
 				else
 				{
-					cursor_coords.x = 0;
+					input.SubString(0, cursor, selected);
+					App->font->CalcSize(selected.GetString(), cursor_coords.x, cursor_coords.y);
 				}
 			}
-
-			if (selection != 0 && listener != nullptr)
+			else
 			{
-				listener->OnGui(this, GuiEvents::input_submit);
+				cursor_coords.x = 0;
 			}
 		}
-	
+
+		if (selection != 0 && listener != nullptr)
+		{
+			listener->OnGui(this, GuiEvents::input_submit);
+		}
+	}
 }
 
 // --------------------------
@@ -358,16 +390,16 @@ void GuiInputText::Draw() const
 	image.Draw();
 
 	// render text
-	if(input.Length() > 0)
+	if (input.Length() > 0)
 		text.Draw();
 
 	// render cursor
-	if(have_focus == true)
+	if (have_focus == true)
 	{
 		// TODO 2: Draw cursor when focus is received
 		// use a simple DrawQuad. For the size and position use
 		// App->font->CalcSize
 		iPoint pos = GetScreenPos();
-		App->render->DrawQuad({pos.x + (cursor_coords.x - (CURSOR_WIDTH / 2)), pos.y, CURSOR_WIDTH, cursor_coords.y}, 255, 255, 255, 255, true, false);
+		App->render->DrawQuad({ pos.x + (cursor_coords.x - (CURSOR_WIDTH / 2)), pos.y, CURSOR_WIDTH, cursor_coords.y }, 255, 255, 255, 255, true, false);
 	}
 }

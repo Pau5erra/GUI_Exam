@@ -85,8 +85,8 @@ bool j1Scene::Start()
 	name_window->interactive = true;
 	name_window->cut_childs = false;
 
-	Gui* input_name = App->gui->CreateInput({ (0), (0), (0), (0) }, "Your Name", 79,false, {0, 0});
-	input_name->parent = name_window;
+	Gui* input_name = App->gui->CreateInput({ (0), (0), (0), (0) }, "Your Name", 79, { 0, 0 }, false, 10 );
+	input_name->SetParent(name_window);
 	input_name->interactive = true;
 	input_name->can_focus = true;
 
@@ -100,7 +100,7 @@ bool j1Scene::Start()
 	GuiLabel* login_text = App->gui->CreateLabel("Login");
 	login_text->SetFont(wow_font);
 	login_text->SetColor(color);
-	login_text->parent = login_button;
+	login_text->SetParent(login_button);
 	login_text->Center();
 
 	Gui* password_window = App->gui->CreateImage("UI/UI-SILVER-BUTTON-UP.png");
@@ -108,8 +108,8 @@ bool j1Scene::Start()
 	password_window->interactive = true;
 	password_window->cut_childs = false;
 
-	Gui* input_password = App->gui->CreateInput({ (0), (0), (0), (0) }, "Your Password", 79, true, { 0, 0 });
-	input_password->parent = password_window;
+	Gui* input_password = App->gui->CreateInput({ (0), (0), (0), (0) }, "Your Password", 79, { 0, 0 }, true, 10);
+	input_password->SetParent(password_window);
 	input_password->interactive = true;
 	input_password->can_focus = true;
 
@@ -118,8 +118,8 @@ bool j1Scene::Start()
 	prova_window->interactive = true;
 	prova_window->cut_childs = false;
 
-	Gui* input_prova = App->gui->CreateInput({ (0), (0), (0), (0) }, "Your Prova", 79, false, { 0, 0 });
-	input_prova->parent = prova_window;
+	Gui* input_prova = App->gui->CreateInput({ (0), (0), (0), (0) }, "Your Prova", 79, { 0, 0 }, false, 10);
+	input_prova->SetParent(prova_window);
 	input_prova->interactive = true;
 	input_prova->can_focus = true;
 
@@ -143,7 +143,17 @@ bool j1Scene::Update(float dt)
 
 	if(App->input->GetKey(SDL_SCANCODE_S) == KEY_DOWN)
 		App->SaveGame("save_game.xml");
-	
+
+	if (App->input->GetKey(SDL_SCANCODE_P) == KEY_DOWN)
+	{
+		if (login_button)
+		{
+			if (login_button->active == true)
+				App->gui->DisableGuiElement(login_button);
+			else
+				App->gui->EnableGuiElement(login_button);
+		}
+	}
 	p2SString title();
 
 	//App->win->SetTitle(title.GetString());

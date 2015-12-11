@@ -38,38 +38,38 @@ bool j1Gui::Start()
 // Update all guis
 bool j1Gui::PreUpdate()
 {
-	if(App->input->GetKey(SDL_SCANCODE_F1) == KEY_DOWN)
+	if (App->input->GetKey(SDL_SCANCODE_F1) == KEY_DOWN)
 		debug = !debug;
 
 	const Gui* mouse_hover = FindMouseHover();
-	if(mouse_hover && 
-	   mouse_hover->can_focus == true && 
-	   App->input->GetMouseButtonDown(SDL_BUTTON_LEFT) == j1KeyState::KEY_DOWN)
+	if (mouse_hover &&
+		mouse_hover->can_focus == true &&
+		App->input->GetMouseButtonDown(SDL_BUTTON_LEFT) == j1KeyState::KEY_DOWN)
 		focus = mouse_hover;
 
 	p2List_item<Gui*>* item;
 
 	// if TAB find the next item and give it the focus
-	if(App->input->GetKey(SDL_SCANCODE_TAB) == j1KeyState::KEY_DOWN)
+	if (App->input->GetKey(SDL_SCANCODE_TAB) == j1KeyState::KEY_DOWN)
 	{
-		int pos = elements.find((Gui*) focus);
-		if(pos > 0)
+		int pos = elements.find((Gui*)focus);
+		if (pos > 0)
 		{
 			focus = nullptr;
 			item = elements.At(pos);
-			if(item)
+			if (item)
 				item = item->next;
-			for(item; item; item = item->next)
-				if(item->data->can_focus == true)
+			for (item; item; item = item->next)
+				if (item->data->can_focus == true && item->data->active == true)
 				{
 					focus = item->data;
 					break;
 				}
 		}
-		if(focus == nullptr)
+		if (focus == nullptr)
 		{
-			for(item = elements.start; item; item = item->next)
-				if(item->data->can_focus == true)
+			for (item = elements.start; item; item = item->next)
+				if (item->data->can_focus == true && item->data->active == true)
 				{
 					focus = item->data;
 					break;
@@ -78,12 +78,16 @@ bool j1Gui::PreUpdate()
 	}
 
 	// Now the iteration for input and update
-	for(item = elements.start; item; item = item->next)
-		if(item->data->interactive == true)
+	for (item = elements.start; item; item = item->next)
+		if (item->data->interactive == true && item->data->active == true)
 			item->data->CheckInput(mouse_hover, focus);
 
-	for(item = elements.start; item; item = item->next)
-		item->data->Update(mouse_hover, focus);
+	for (item = elements.start; item; item = item->next)
+		if (item->data->active == true)
+		{
+			item->data->Update(mouse_hover, focus);
+			item->data->Update();
+		}
 
 	return true;
 }
@@ -114,11 +118,14 @@ bool j1Gui::PostUpdate()
 {
 	p2List_item<Gui*>* item;
 
-	for(item = elements.start; item; item = item->next)
+	for (item = elements.start; item; item = item->next)
 	{
-		item->data->Draw();
-		if(debug == true)
-			item->data->DebugDraw();
+		if (item->data->active == true)
+		{
+			item->data->Draw();
+			if (debug == true)
+				item->data->DebugDraw();
+		}
 	}
 
 	return true;
@@ -179,11 +186,11 @@ GuiLabel* j1Gui::CreateLabel(const char* text, _TTF_Font* font)
 	return ret;
 }
 
-GuiInputText* j1Gui::CreateInput(const rectangle& section, const char* default_text, uint width, bool is_password, const iPoint& offset)
+GuiInputText* j1Gui::CreateInput(const rectangle& section, const char* default_text, uint width, const iPoint& offset, bool password, int max_quantity)
 {
 	GuiInputText* ret = NULL;
 
-	ret = new GuiInputText(default_text, width, atlas, section,is_password, offset);
+	ret = new GuiInputText(default_text, width, atlas, section, offset, password, max_quantity);
 	elements.add(ret);
 
 	return ret;
@@ -195,3 +202,29 @@ const SDL_Texture* j1Gui::GetAtlas() const
 	return atlas;
 }
 
+void j1Gui::DisableGuiElement(Gui* elem){
+	{
+		if (elem->childs.count() > 0)
+		{
+			for (p2List_item<Gui*>* i = elem->childs.end; i; i = i->prev)
+			{
+				DisableGuiElement(i->data);
+			}
+		}
+		elem->active = false;
+	}
+}
+
+void j1Gui::EnableGuiElement(Gui* elem){
+	if (elem != NULL)
+	{
+		if (elem->childs.count() > 0)
+		{
+			for (p2List_item<Gui*>* i = elem->childs.end; i; i = i->prev)
+			{
+				EnableGuiElement(i->data);
+			}
+		}
+		elem->active = true;
+	}
+}
