@@ -228,3 +228,25 @@ void j1Gui::EnableGuiElement(Gui* elem){
 		elem->active = true;
 	}
 }
+
+bool j1Gui::DeleteGuiElement(Gui* elem)
+{
+	bool ret = false;
+	if (elem != NULL)
+	{
+		if (elem->childs.count() > 0)
+		{
+			for (p2List_item<Gui*>* i = elem->childs.end; i; i = i->prev)
+			{
+				DeleteGuiElement(i->data);
+			}
+		}
+		int pos = elements.find(elem);
+
+		p2List_item<Gui*>* tmp = elements.At(pos);
+		RELEASE(tmp->data);
+		if (elements.del(tmp))
+			ret = true;
+	}
+	return ret;
+}

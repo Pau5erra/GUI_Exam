@@ -46,6 +46,7 @@ public:
 
 	void DisableGuiElement(Gui* elem);
 	void EnableGuiElement(Gui* elem);
+	bool DeleteGuiElement(Gui* elem);
 
 	const Gui* FindMouseHover() const;
 	const SDL_Texture* GetAtlas() const;

@@ -123,6 +123,8 @@ bool j1Scene::Start()
 	input_prova->interactive = true;
 	input_prova->can_focus = true;
 
+	App->gui->DisableGuiElement(prova_window);
+
 	return true;
 }
 
