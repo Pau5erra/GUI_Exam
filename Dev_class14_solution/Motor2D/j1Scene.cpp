@@ -66,6 +66,7 @@ bool j1Scene::Start()
 	iPoint p = title->GetLocalPos();
 	title->SetLocalPos(p.x, 50);
 	*/
+	/*
 	Gui* fondo = App->gui->CreateImage("UI/WOW00.png");
 
 	_TTF_Font* wow_font = App->font->Load("UI/LemonMilk.otf");
@@ -124,6 +125,21 @@ bool j1Scene::Start()
 	input_prova->can_focus = true;
 
 	App->gui->DisableGuiElement(prova_window);
+	*/
+	Gui* slider_prova = App->gui->CreateSlideBar({ 0, 11, 307, 11 }, { 805, 318, 26, 15 });
+	slider_prova->Center();
+	slider_prova->interactive = true;
+	slider_prova->can_focus = true;
+
+	value = 0.0f;
+
+	sprintf_s(value_string, "%f", value);
+	value_text = App->gui->CreateLabel("Value:");
+	value_text->SetLocalPos(200, 100);
+
+	value_char = App->gui->CreateLabel(value_string);
+	value_char->SetParent(value_text);
+	value_char->SetLocalPos(75, 2);
 
 	return true;
 }
@@ -157,6 +173,10 @@ bool j1Scene::Update(float dt)
 		}
 	}
 	p2SString title();
+
+	sprintf_s(value_string, "%f", value);
+
+	value_char->SetText(value_string);
 
 	//App->win->SetTitle(title.GetString());
 

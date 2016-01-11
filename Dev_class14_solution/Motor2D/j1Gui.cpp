@@ -196,6 +196,15 @@ GuiInputText* j1Gui::CreateInput(const rectangle& section, const char* default_t
 	return ret;
 }
 
+SlideBar* j1Gui::CreateSlideBar(const rectangle& bar_section, const rectangle& thumb_section){
+	
+	SlideBar* ret = NULL;
+	ret = new SlideBar(atlas, bar_section, thumb_section);
+	elements.add(ret);
+
+	return ret;
+}
+
 // const getter for atlas
 const SDL_Texture* j1Gui::GetAtlas() const
 {

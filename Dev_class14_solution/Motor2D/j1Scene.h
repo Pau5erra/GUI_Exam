@@ -5,6 +5,7 @@
 
 struct SDL_Texture;
 class GuiImage;
+class GuiLabel;
 class j1Scene : public j1Module
 {
 public:
@@ -35,10 +36,15 @@ public:
 	// Called when UI event is raised
 	void OnGui(Gui* ui, GuiEvents event);
 
+	float value;
 private:
 	SDL_Texture* debug_tex;
 	GuiImage* button;
 	GuiImage* login_button;
+
+	GuiLabel* value_text;
+	GuiLabel* value_char;
+	char value_string[100];
 };
 
 #endif // __j1SCENE_H__

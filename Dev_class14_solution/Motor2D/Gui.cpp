@@ -7,6 +7,7 @@
 #include "j1Gui.h"
 #include "Gui.h"
 #include "j1App.h"
+#include "j1Scene.h"
 
 // class Gui ---------------------------------------------------
 Gui::Gui() : rect({0,0,0,0})
@@ -402,4 +403,68 @@ void GuiInputText::Draw() const
 		iPoint pos = GetScreenPos();
 		App->render->DrawQuad({ pos.x + (cursor_coords.x - (CURSOR_WIDTH / 2)), pos.y, CURSOR_WIDTH, cursor_coords.y }, 255, 255, 255, 255, true, false);
 	}
+}
+
+SlideBar::SlideBar(const SDL_Texture* texture, const rectangle& bar_section, const rectangle& thumb_section) :
+bar(texture, bar_section), thumb(texture, thumb_section){
+	
+	type = GuiTypes::slide_bar;
+	thumb.SetParent(&bar);
+	bar.SetParent(this);
+
+
+	SetSize(bar_section.w, bar_section.h);
+
+}
+
+SlideBar::~SlideBar(){}
+
+void SlideBar::Draw() const{
+	bar.Draw();
+	thumb.Draw();
+}
+
+void SlideBar::Update(const Gui* mouse_hover, const Gui* focus){
+	if (mouse_hover == this){
+		if (App->input->GetKey(SDL_SCANCODE_LEFT) == KEY_REPEAT){
+			if (thumb.GetLocalPos().x > 0){
+				thumb.SetLocalPos(thumb.GetLocalPos().x - 1, thumb.GetLocalPos().y);
+				
+			}
+			
+		}
+		if (App->input->GetKey(SDL_SCANCODE_RIGHT) == KEY_REPEAT){
+			if (thumb.GetLocalPos().x < bar.GetLocalRect().w){
+				thumb.SetLocalPos(thumb.GetLocalPos().x + 1, thumb.GetLocalPos().y);
+				
+			}
+			
+		}
+		iPoint mouse;
+		App->input->GetMousePosition(mouse.x, mouse.y);
+		if (App->input->GetMouseButtonDown(SDL_BUTTON_LEFT) == KEY_REPEAT){
+	
+			if (mouse.x < thumb.GetScreenRect().x + thumb.GetScreenRect().w && mouse.x > thumb.GetScreenRect().x){
+				if (mouse.y < thumb.GetScreenRect().y + thumb.GetScreenRect().h && mouse.x > thumb.GetScreenRect().y){
+
+					iPoint motion;
+					App->input->GetMouseMotion(motion.x, motion.y);
+					thumb.SetLocalPos(thumb.GetLocalPos().x +motion.x, thumb.GetLocalPos().y);
+					App->scene->value +=motion.x;
+				}
+			}
+			else{
+				if (mouse.x < thumb.GetScreenPos().x){
+					thumb.SetLocalPos(thumb.GetLocalPos().x -1, thumb.GetLocalPos().y);
+					
+				}
+				else{
+					thumb.SetLocalPos(thumb.GetLocalPos().x + 1, thumb.GetLocalPos().y);
+				}
+			}
+		}
+		App->scene->value = 100 * thumb.GetLocalPos().x / bar.GetLocalRect().w;
+	}
+
+
 }

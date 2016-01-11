@@ -26,7 +26,8 @@ enum GuiTypes
 	image,
 	label,
 	button,
-	input_text
+	input_text,
+	slide_bar
 };
 
 // ---------------------------------------------------
@@ -53,9 +54,10 @@ public:
 	iPoint GetLocalPos() const;
 	void SetListener(j1Module* module);
 	void SetParent(Gui* dad);
+	void SetSize(int w, int h);
 
 protected:
-	void SetSize(int w, int h);
+	
 
 public:
 	bool draggable = false;
@@ -142,5 +144,21 @@ private:
 	const char* def_text;
 	bool show_def_text;
 };
+
+
+class SlideBar : public Gui{
+public:
+	SlideBar(const SDL_Texture* texture, const rectangle& bar_section, const rectangle& thumb_section);
+	~SlideBar();
+
+	void Update(const Gui* mouse_hover, const Gui* focus);
+	void Draw() const;
+
+private:
+
+	GuiImage bar;
+	GuiImage thumb;
+};
+
 
 #endif // __GUI_H__
